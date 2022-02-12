@@ -234,3 +234,51 @@ ggplot(air_monitor_day) +
 ### Monthly data ----
 ggplot(air_monitor_month) + 
   geom_col(aes(month, ugm3)) + facet_wrap(~pollutant, scales = "free")
+
+# Supply and demand ----
+# 空气质量标准有小时、日、年等，根据数据，结合可采取的绿色空间相关措施来看，按日计算比较合理
+# 计算每天的空气污染移除需求量
+# 需求量 = 实测值 + 移除量 - 标准值
+# 全京都市建成区面积147448500平方米
+# 树木覆盖率为0.00591%
+# 树木覆盖面积为8714.206平方米
+# 日本空气质量标准参考环境省数据：
+# 英文版：https://www.env.go.jp/en/air/aq/aq.html
+# 日文版：https://www.env.go.jp/kijun/taiki.html
+# 各种气体ppm和ug/m3的转换系数则采用WHO版本系数：https://uk-air.defra.gov.uk/assets/documents/reports/cat06/0502160851_Conversion_Factors_Between_ppb_and.pdf
+# 结果如下，注意有些标准并非基于每日24小时平均值：
+# NO2：每日24时平均值不超过0.06ppm = 0.06*1880 = 112.8ug/m3
+# O3：每小时平均值不超过0.06ppm = 0.06*1960 = 117.6ug/m3
+# PM2.5：每日平均值不超过35ug/m3
+# SO2：每日24时平均值不超过0.04ppm = 2620*0.04 = 104.8ug/m3
+air_dem_day <- merge(air_day, air_monitor_day, 
+  by = c("timestamp", "season", "month", "weekday", "pollutant")
+)
+air_std <- data.frame(
+  pollutant = c("NO2", "O3", "PM2.5", "SO2"), 
+  std_ugm3 = c(112.8, 117.6, 35, 104.8)
+)
+# 需求量计算：基于总重量单位计算
+air_dem_day <- merge(air_dem_day, air_std, by = "pollutant")
+air_dem_day$demand <- 
+  # 探头实测值乘以城市面积和200米高度得到该体积内污染物总量
+  air_dem_day$ugm3 * 147448500 * 200 + 
+  # 绿植污染物去除量（g/m2）乘以树木面积为该体积内污染物去除总量
+  air_dem_day$flux * 10^6 * 8714.206 - 
+  # 标准量浓度值乘以城市面积和200米高度得到该体积内污染物总量
+  air_dem_day$std_ugm3 *  147448500 * 200
+# 若需求量为负数，则说明需求为0
+air_dem_day$demand[which(air_dem_day$demand < 0)] <- 0
+
+# 供给和需求之比
+air_dem_day$ratio_sply_dem <- 
+  air_dem_day$flux * 10^6 * 8714.206 / air_dem_day$demand
+air_dem_day$ratio_sply_dem[which(air_dem_day$demand == 0)] <- NA
+
+# 查看月份或季节的满足率
+ggplot(air_dem_day) + geom_point(aes(factor(month), ratio_sply_dem)) + 
+  facet_wrap(~pollutant)
+ggplot(air_dem_day) + geom_point(aes(season, ratio_sply_dem)) + 
+  facet_wrap(~pollutant)
+# 只有一天的数据是不满足需求的？而且可能还是考虑要移除的异常值？
+
