@@ -120,8 +120,8 @@ ggplot(air_day) +
 ggplot(air_month) + 
   geom_col(aes(month, flux)) + facet_wrap(~pollutant, scales = "free")
 
-## Supply and demand ----
-### Data import ----
+# Air pollutant monitor ----
+## Data import ----
 # 读取空气质量实测值
 air_monitor_hour <- mdb.get(
   "RawData/ItreeCityLevel/Tree/AirPollutant.mdb", 
@@ -177,6 +177,7 @@ air_monitor_month <- aggregate(
   ugm3 ~ pollutant + season + month, 
   data = air_monitor_day, sum)
 
+## Analysis ----
 ### Hourly data ----
 # 可视化
 # 时间变化及变异：盒形图
@@ -233,3 +234,4 @@ ggplot(air_monitor_day) +
 ### Monthly data ----
 ggplot(air_monitor_month) + 
   geom_col(aes(month, ugm3)) + facet_wrap(~pollutant, scales = "free")
+
