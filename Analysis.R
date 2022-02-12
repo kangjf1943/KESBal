@@ -122,6 +122,7 @@ ggplot(air_month) +
 
 # Air pollutant monitor ----
 ## Data import ----
+### Hourly data ----
 # 读取空气质量实测值
 air_monitor_hour <- mdb.get(
   "RawData/ItreeCityLevel/Tree/AirPollutant.mdb", 
@@ -166,16 +167,15 @@ air_monitor_hour_smry$season <-
   aggregate(ugm3 ~ pollutant + season + hour, data = air_monitor_hour, mean)
 
 ### Daily data ----
-# 将小时数据叠加成日数据
-# 先将各小时的时间累加
+# 因为是浓度数据，所以将小时数据取平均成日数据
 air_monitor_day <- aggregate(
   ugm3 ~ pollutant + timestamp + season + month + weekday, 
-  data = air_monitor_hour, sum)
+  data = air_monitor_hour, mean)
 
 ### Monthly data ----
 air_monitor_month <- aggregate(
   ugm3 ~ pollutant + season + month, 
-  data = air_monitor_day, sum)
+  data = air_monitor_day, mean)
 
 ## Analysis ----
 ### Hourly data ----
@@ -234,4 +234,3 @@ ggplot(air_monitor_day) +
 ### Monthly data ----
 ggplot(air_monitor_month) + 
   geom_col(aes(month, ugm3)) + facet_wrap(~pollutant, scales = "free")
-
