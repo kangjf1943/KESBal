@@ -119,3 +119,117 @@ ggplot(air_day) +
 ### Monthly data ----
 ggplot(air_month) + 
   geom_col(aes(month, flux)) + facet_wrap(~pollutant, scales = "free")
+
+## Supply and demand ----
+### Data import ----
+# 读取空气质量实测值
+air_monitor_hour <- mdb.get(
+  "RawData/ItreeCityLevel/Tree/AirPollutant.mdb", 
+  tables = "AirPollutant")
+names(air_monitor_hour) <- tolower(names(air_monitor_hour))
+# 删除CO和PM10的数据：没有关于他们的健康影响效益估算
+air_monitor_hour <- 
+  air_monitor_hour[which(!air_monitor_hour$pollutant %in% c("PM10*", "CO")), ]
+# 添加小时数据
+air_monitor_hour$hour <- rep_len(1:24, length.out = nrow(air_monitor_hour))
+
+# 各天内各小时的数据变化
+# 计算各类污染物各小时值：取各个监测点的平均值
+air_monitor_hour <- 
+  aggregate(ugm3 ~ pollutant + timestamp + hour, data = air_monitor_hour, mean)
+
+# 增加周几，月份，季节列
+air_monitor_hour$weekday <- weekdays(air_monitor_hour$timestamp)
+air_monitor_hour$weekday <- factor(
+  air_monitor_hour$weekday, 
+  levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
+             "Saturday", "Sunday"))
+
+air_monitor_hour$month <- month(air_monitor_hour$timestamp)
+
+air_monitor_hour$season <- "spring"
+air_monitor_hour$season[which(air_monitor_hour$month <= 6 & air_monitor_hour$month > 3)] <- "summer"
+air_monitor_hour$season[which(air_monitor_hour$month <= 9 & air_monitor_hour$month > 6)] <- "autumn"
+air_monitor_hour$season[which(air_monitor_hour$month <= 12 & air_monitor_hour$month > 9)] <- "winter"
+air_monitor_hour$season <- 
+  factor(air_monitor_hour$season, 
+         levels = c("spring", "summer", "autumn", "winter"))
+
+### Hourly summary ----
+air_monitor_hour_smry <- vector("list")
+
+air_monitor_hour_smry$weekday <- 
+  aggregate(ugm3 ~ pollutant + weekday + hour, data = air_monitor_hour, median)
+air_monitor_hour_smry$month <- 
+  aggregate(ugm3 ~ pollutant + month + hour, data = air_monitor_hour, mean)
+air_monitor_hour_smry$season <- 
+  aggregate(ugm3 ~ pollutant + season + hour, data = air_monitor_hour, mean)
+
+### Daily data ----
+# 将小时数据叠加成日数据
+# 先将各小时的时间累加
+air_monitor_day <- aggregate(
+  ugm3 ~ pollutant + timestamp + season + month + weekday, 
+  data = air_monitor_hour, sum)
+
+### Monthly data ----
+air_monitor_month <- aggregate(
+  ugm3 ~ pollutant + season + month, 
+  data = air_monitor_day, sum)
+
+### Hourly data ----
+# 可视化
+# 时间变化及变异：盒形图
+# 一周内各天分图：一天内各小时污染物去除率变化
+ggplot(air_monitor_hour) + 
+  geom_boxplot(aes(factor(hour), ugm3)) + 
+  facet_grid(pollutant~weekday, scales = "free")
+# 待办：视觉上看没有明显差异，之后可以统计对比一下
+
+# 各月分图：一天内各小时污染物去除率变化
+ggplot(air_monitor_hour) + 
+  geom_boxplot(aes(factor(hour), ugm3)) + 
+  facet_grid(pollutant~month, scales = "free")
+
+# 各季节分图：一天内各小时污染物去除率变化
+ggplot(air_monitor_hour) + 
+  geom_boxplot(aes(factor(hour), ugm3)) + 
+  facet_grid(pollutant~season, scales = "free")
+
+# 条形图：时间变化
+# 周几分图：一天内的变化
+ggplot(air_monitor_hour_smry$weekday) + 
+  geom_line(aes(hour, ugm3, color = factor(weekday))) + 
+  facet_wrap(~pollutant, scales = "free")
+# 注意NO2的双高峰
+
+# 月份分图：一天内的变化
+ggplot(air_monitor_hour_smry$month) + 
+  geom_line(aes(hour, ugm3, color = factor(month))) + 
+  facet_wrap(~pollutant, scales = "free")
+
+# 季节分图：一天内的变化
+ggplot(air_monitor_hour_smry$season) + 
+  geom_line(aes(hour, ugm3, color = factor(season))) + 
+  facet_wrap(~pollutant, scales = "free")
+
+### Daily data ----
+# 周几分图
+ggplot(air_monitor_day) + 
+  geom_boxplot(aes(factor(weekday), ugm3)) + 
+  facet_wrap(~pollutant, scales = "free")
+# 除了NO2无明显差别
+
+# 月份分图
+ggplot(air_monitor_day) + 
+  geom_boxplot(aes(factor(month), ugm3)) + 
+  facet_wrap(~pollutant, scales = "free")
+
+# 季节分图
+ggplot(air_monitor_day) + 
+  geom_boxplot(aes(factor(season), ugm3)) + 
+  facet_wrap(~pollutant, scales = "free")
+
+### Monthly data ----
+ggplot(air_monitor_month) + 
+  geom_col(aes(month, ugm3)) + facet_wrap(~pollutant, scales = "free")
