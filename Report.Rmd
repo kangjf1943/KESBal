@@ -1,0 +1,99 @@
+---
+title: "Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+```
+
+## 概述
+
+应该进行碳、空气污染、雨水三方面服务的供给和需求分析，目前已完成了空气污染方面的分析。就结果简单而言，从写论文的角度说，效果不算理想：京都市的空气质量太好了，以至于很多气体污染物的去除需求为0。
+
+## 方法
+
+**已有数据**
+
+基于京都市内各空气质量监测点和模型评估出来的实测空气污染浓度值和污染物去除量值，这些数据的时间跨度和分辨率为一年内的每一个小时，评估的污染物包括：二氧化氮，臭氧，PM2.5，和二氧化硫。
+
+基于网上查到的各类污染物环境标准浓度值。
+
+**做了什么分析**
+
+可视化各项数值时间上的变化：将小时数据合并为日数据和月数据，可视化污染物浓度和污染物去除值的时间变化。
+
+评估供求关系：
+供给量即污染物去除量。
+需求量 = 目前的实测值 + 污染物被树木移除的量 - 环境标准值，也就是说，是将污染物产生量减少到可接受水平的服务量，其中日本空气质量标准参考环境省数据。
+
+**结果**
+
+共三部分：污染物去除；大气污染物；和供需关系。
+
+第一部分：污染物去除
+可视化各项污染物去除量的变化：
+基于小时数据：不管分工作日-周末看，还是分月份或季节看，都体现出白天工作时间内去除量更高的规律，主要原因是这段时间的大气污染浓度也比较高。
+
+```{r}
+ggplot(air_hour) + 
+  geom_boxplot(aes(factor(hour), flux)) + 
+  facet_grid(pollutant~weekday, scales = "free")
+```
+
+```{r}
+ggplot(air_hour) + 
+  geom_boxplot(aes(factor(hour), flux)) + 
+  facet_grid(pollutant~season, scales = "free")
+```
+
+基于日平均数据：
+分工作日-周末来看的话，NO2去除量在周日比较少，其他无明显差异；分季节来看的话，NO2体现出春季高，秋季低的格局；而其他的污染物主要是夏季比较高。
+
+```{r}
+ggplot(air_day) + 
+  geom_boxplot(aes(factor(weekday), flux)) + 
+  facet_wrap(~pollutant, scales = "free")
+```
+
+```{r}
+ggplot(air_day) + 
+  geom_boxplot(aes(factor(season), flux)) + 
+  facet_wrap(~pollutant, scales = "free")
+```
+
+第二部分：大气污染物
+
+和上面污染物去除量的图类似，可以基于大气污染物浓度的小时数据和日数据对其进行可视化：
+
+```{r}
+ggplot(air_monitor_hour) + 
+  geom_boxplot(aes(factor(hour), ugm3)) + 
+  facet_grid(pollutant~weekday, scales = "free")
+ggplot(air_monitor_hour) + 
+  geom_boxplot(aes(factor(hour), ugm3)) + 
+  facet_grid(pollutant~season, scales = "free")
+
+ggplot(air_monitor_day) + 
+  geom_boxplot(aes(factor(weekday), ugm3)) + 
+  facet_wrap(~pollutant, scales = "free")
+ggplot(air_monitor_day) + 
+  geom_boxplot(aes(factor(season), ugm3)) + 
+  facet_wrap(~pollutant, scales = "free")
+```
+
+第三部分：供需关系
+
+只有需求尚未满足的日期会被画出：可见只有夏天某一天的O3需要进一步去除，其他污染物和其他日期均无污染物去除需求。
+
+```{r}
+ggplot(air_dem_day) + geom_point(aes(season, ratio_sply_dem)) + 
+  facet_wrap(~pollutant)
+```
+
+
+## 下一步
+
+- 我会再验算一遍，如果没有问题的话，就考虑将空间差异纳入考虑，可能能够识别出某些需要增加绿植的地区。因为现在的计算方法是以整个城市作为整体进行核算的，可能会忽略其空间差异性。
+
+- 对碳和雨水服务进行分析。
