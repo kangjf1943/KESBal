@@ -282,3 +282,13 @@ ggplot(air_dem_day) + geom_point(aes(season, ratio_sply_dem)) +
   facet_wrap(~pollutant)
 # 只有一天的数据是不满足需求的？而且可能还是考虑要移除的异常值？
 
+# 绿植污染物去除量占总污染物的比例呢？
+# 待办：这个贡献率计算有问题？
+air_dem_day$contrib_green <- 
+  air_dem_day$flux * 10^6 * 8714.206 /
+  (air_dem_day$flux * 10^6 * 8714.206 + 
+     air_dem_day$ugm3 * 147448500 * 200)
+ggplot(air_dem_day) + geom_boxplot(aes(season, contrib_green)) + 
+  facet_wrap(~pollutant)
+
+
