@@ -62,6 +62,24 @@ no2.monitor <- GetAttrTab("GProcData/NO2Monitors_2019_add_ward") %>%
   select(sikuchoson, latitude, longitude, monitor_id) %>% 
   rename(monitor_lat = latitude, monitor_long = longitude)
 
+o3.monitor <- GetAttrTab("GProcData/O3Monitors_2019_add_ward") %>% 
+  mutate(monitor_id = paste(state, county, siteid, sep = "_")) %>%
+  select(sikuchoson, latitude, longitude, monitor_id) %>% 
+  rename(monitor_lat = latitude, monitor_long = longitude)
+
+pm25.monitor <- GetAttrTab("GProcData/PM25Monitors_2019_add_ward") %>% 
+  mutate(monitor_id = paste(state, county, siteid, sep = "_")) %>%
+  select(sikuchoson, latitude, longitude, monitor_id) %>% 
+  rename(monitor_lat = latitude, monitor_long = longitude)
+
+so2.monitor <- GetAttrTab("GProcData/SO2Monitors_2019_add_ward") %>% 
+  mutate(monitor_id = paste(state, county, siteid, sep = "_")) %>%
+  select(sikuchoson, latitude, longitude, monitor_id) %>% 
+  rename(monitor_lat = latitude, monitor_long = longitude)
+
 # Analysis ----
 ward.co.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = co.monitor)
 ward.no2.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = no2.monitor)
+ward.o3.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = o3.monitor)
+ward.pm25.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = pm25.monitor)
+ward.so2.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = so2.monitor)
