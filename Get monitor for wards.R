@@ -27,10 +27,10 @@ MatchWardMon <- function(centroid.df, monitor.df) {
     select(long, lat) %>% 
     distm(monitor.df[c("monitor_long", "monitor_lat")]) %>%
     as.data.frame() %>% 
-    rename_with(~ as.character(monitor.df$sikuchoson)) %>%
+    rename_with(~ as.character(monitor.df$monitor_id)) %>%
     mutate(ward = centroid.df$sikuchoson) %>% 
-    pivot_longer(cols = monitor.df$sikuchoson, 
-                 names_to = "monitor", values_to = "distance")
+    pivot_longer(cols = monitor.df$monitor_id, 
+                 names_to = "monitor_id", values_to = "distance")
   
   # pick up the ward-monitor pairs with minimum distance
   ward.monitor <- dist.centroid.monitor %>% 
@@ -39,8 +39,8 @@ MatchWardMon <- function(centroid.df, monitor.df) {
     ungroup() %>% 
     left_join(dist.centroid.monitor, 
               by = c("ward", "min_dist" = "distance")) %>%
-    left_join(monitor.df, by = c("monitor" = "sikuchoson")) %>% 
-    rename(dist_ward_monitor = min_dist) %>% 
+    left_join(monitor.df, by = "monitor_id") %>% 
+    rename(dist_ward_monitor = min_dist, monitor = sikuchoson) %>% 
     select(ward, monitor, monitor_id, dist_ward_monitor, 
            monitor_lat, monitor_long)
   return(ward.monitor)
@@ -57,6 +57,11 @@ co.monitor <- GetAttrTab("GProcData/COMonitors_2019_add_ward") %>%
   select(sikuchoson, latitude, longitude, monitor_id) %>% 
   rename(monitor_lat = latitude, monitor_long = longitude)
 
+no2.monitor <- GetAttrTab("GProcData/NO2Monitors_2019_add_ward") %>% 
+  mutate(monitor_id = paste(state, county, siteid, sep = "_")) %>%
+  select(sikuchoson, latitude, longitude, monitor_id) %>% 
+  rename(monitor_lat = latitude, monitor_long = longitude)
+
 # Analysis ----
 ward.co.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = co.monitor)
-
+ward.no2.monitor <- MatchWardMon(centroid.df = centroid, monitor.df = no2.monitor)
