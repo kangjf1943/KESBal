@@ -5,9 +5,7 @@
 library(dplyr)
 
 # read data
-land.cover <- read.csv("GProcData/L03-b-16_5235.csv")
-a <- land.cover
-land.cover <- a %>% 
+forest.cover <- read.csv("GProcData/L03-b-16_5235.csv") %>% 
   # keep the data within Kyoto city
   select(土地利用種, SIKUCHOSON) %>% 
   subset(SIKUCHOSON != "") %>%
