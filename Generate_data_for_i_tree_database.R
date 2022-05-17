@@ -193,6 +193,13 @@ for (i in names(ward.monitor.match)) {
     MatchWardMon(centroid.df = centroid, monitor.df = monitor.shp.attr[[i]])
 }
 
+# read daily minimum temperature of Kyoto station in Kyoto city 
+sta.temp <- 
+  read.csv("RRawData/Kyoto_temperature.csv", skip = 6, header = FALSE) %>% 
+  as_tibble() %>% 
+  rename_with(~ c("date", "temp", "var_1", "var_2")) %>% 
+  select(date, temp)
+
 # hourly data of monitors 
 pollutant.mdb.hour <- vector("list", length = length(kPollutants))
 names(pollutant.mdb.hour) <- kPollutants
@@ -233,6 +240,8 @@ location.info <- location.info %>%
     climate_region = "Mid-Atlantic", 
     # Electricity Emissions (kg CO2/kWh): use “0.509”, which is estimated by Dr. Hirabayashi based on local data of Kyoto. 
     electricity_emissions = 0.509, 
+    # calculate mean daily minimum temperature then turn to Fahrenheit degree
+    mean_minimum_temperature_fahrenheit = mean(sta.temp$temp) * 1.8 + 32, 
     # Leaf On Day of Year: Based on Table S1 of Kang, J., Hirabayashi, S., Shibata, S., 2022. Urban Forest Ecosystem Services Vary with Land Use and Species: A Case Study of Kyoto City. Forests 13, 67, the value is Apri 4th, which is 94th day of the year 2019, while the date for "Leaf Off Day of Year" is November 18th, which is 322nd day of the year 2019.
     leaf_on_day_of_year = 94, 
     leaf_off_day_of_year = 322, 
