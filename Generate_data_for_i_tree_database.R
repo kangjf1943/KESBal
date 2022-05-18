@@ -143,9 +143,14 @@ FillTemplate <- function(processed.tab, enname.ward) {
   itree.template %>% 
     mutate(CITYNAME = enname.ward) %>%
     left_join(processed.tab, by = c("MONTH", "DAY", "HOUR","SPNAME")) %>% 
+    # replace the target columns with the new data
+    mutate(
+      ADDR = ifelse(is.na(MONITOR_ID_MDB), "MonitorID", MONITOR_ID_MDB), 
+      UNITS = ifelse(is.na(UNITS_MDB), 7, UNITS_MDB), 
+      QUANTITY = ifelse(is.na(UNITS_MDB), -999, SAMPLEVALUE_MDB)
+    ) %>%
     # replace the blank columns of template with the data from *.mdb 
-    select(-ADDR, -UNITS, -QUANTITY) %>% 
-    rename(ADDR = MONITOR_ID_MDB, UNITS = UNITS_MDB, QUANTITY = SAMPLEVALUE_MDB) %>% 
+    select(-MONITOR_ID_MDB, -UNITS_MDB, -SAMPLEVALUE_MDB) %>% 
     select(names(itree.template)) %>% 
     return()
 }
