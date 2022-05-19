@@ -211,6 +211,12 @@ names(pollutant.mdb.hour) <- kPollutants
 for (i in names(pollutant.mdb.hour)) {
   pollutant.mdb.hour[[i]] <- GetMdb(mdb.name = paste0(i, ".mdb"))
 }
+# fix the unit for PM 2.5
+pollutant.mdb.hour$PM25 <- 
+  lapply(pollutant.mdb.hour$PM25, 
+         function(x) {x %>% mutate(Unit = 1)})
+# should eliminate "unit" column in "MonitorInfo" data.frame
+pollutant.mdb.hour$PM25$MonitorInfo$Unit <- NULL
 
 # get population data
 # make a empty charactor vector to store the results 
