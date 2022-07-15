@@ -32,7 +32,7 @@ library(geosphere)
 kPollutants <- c("CO", "NO2", "O3", "PM25", "SO2")
 
 # data of template for i-Tree database
-itree.template <- read.xlsx("RRawData/Air Pollution Template.xlsx") %>% 
+itree.template <- read.xlsx("RRawData/Air_pollution_template.xlsx") %>% 
   as_tibble()
 
 # Japanese names and English names of wards
@@ -363,7 +363,7 @@ lapply(ward.monitor.match, function(x) {
            monitor_lat, monitor_long)
 }) %>% 
   write.xlsx(paste0("RProcData/AddToITreeDatabase/", 
-                    "Match of wards and monitors for each pollutant.xlsx"))
+                    "Match_wards_and_monitors_for_each_pollutant.xlsx"))
 
 # export air pollution data for each ward and each pollutant
 for (i in c("CO", "NO2", "O3", "SO2")) {
