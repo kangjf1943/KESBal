@@ -1,22 +1,13 @@
 # Statement ----
-# Code used to generate the information for adding new location to i-Tree database
+# Code used to generate the information for adding new location (in this case, Kyoto), and the air pollution data to i-Tree database. According to the guidance of i-Tree database, the data should be populated into the required template. Thus here I fill the required data into a table with same format with the required template, then manually copy the generated data into the "real template". After that, I upload the data to i-Tree database, or send them to a staff of the David company. 
+# The required information for adding a new location in i-Tree database include Continent, Nation, State/Province, State/Province type, County/District, County/District Type, City, Currency, Latitude, Longitude, Elevation (meters), Population, Area in square meters, Climate Region, Electricity Emission (kg CO2/kWh), Mean Minimum Temperature (Fahrenheit), Leaf On Day of Year, Leaf Off Day of Year, GMT Offset (hours), Warm Temperature, Abundant Rain, Abundant Vegetation, Snow, Ozone State, Add pollution data for this location, Year, Pollution Data, Pollution Monitor Source, Latitude, Longitude, Resubmission. I get the data from multiple data source. To understand how I get the information quickly, please search this code with "column-" plus the information of your inquiry, for example, search "column-Continent" to see how I get the information/value of continent. 
 
 # Preparation ----
-## Download data ----
+# Get data for latitude, longitude, and elevation of wards in QGIS: 
+# Based on ward map of Kyoto city and centroid tool of QGIS. the detailed steps are: (1) Generate new layer of the centroids of the wards with “Centroid” tool; (2) Use “Field calculator” tool to get the latitude (the expression should be “$y”) and longitude (the expression should be “$x”) of each centroid; (3) Use “Add raster values to points” tool to extract the elevation data from the raster data to the centroid point layer, don’t forget to change the newly added column name to “Elevation”; (4) Then export the attribute table of the centroid layer to Microsoft Excel. 
 
-## QGIS ----
-# Data for latitude, longitude, and elevation of wards: 
-# Based on ward map of Kyoto city and centroid tool of QGIS. the detailed steps are: 
-# Generate new layer of the centroids of the wards with “Centroid” tool; 
-# Use “Field calculator” tool to get the latitude (the expression should be “$y”) and longitude (the expression should be “$x”) of each centroid; 
-# Use “Add raster values to points” tool to extract the elevation data from the raster data to the centroid point layer, don’t forget to change the newly added column name to “Elevation”; 
-# Then export the attribute table of the centroid layer to Microsoft Excel. 
-# Besides, there is a interactive online GIS showing the elevation data of Japan (https://zh-cn.topographic-map.com/maps/eh0b/%E4%BA%AC%E9%83%BD%E5%B8%82/). 
-  
-# Data for forest coverage calculation: 
-# I used 土地利用細分メッシュデータ from 国土交通省 to calculate the vegetation cover of each ward. The steps are: 
-# Join the information of “ward”to land use mesh data; 
-# Export the attribute table of GRawData/L03-b-16_5235-jgd_GML/L03-b-16_5235.shp to *.csv file to directory "GProcData/". This is the mesh data of land ue of Kyoto and surrounding area.The *.csv file will be used to calculate the forest coverage of each ward. 
+# Get forest coverage data in QGIS: 
+# The "土地利用細分メッシュデータ" from 国土交通省 of Japan is used to calculate the vegetation cover of each ward. The steps are: (1) Join the information of “ward”to land use mesh data; (2) Export the attribute table of the file GRawData/L03-b-16_5235-jgd_GML/L03-b-16_5235.shp to *.csv file to directory "GProcData/". This is the mesh data of land use of Kyoto and surrounding area.The *.csv file will be used to calculate the forest coverage of each ward. 
 
 # Package ----
 library(Hmisc)
@@ -27,7 +18,7 @@ library(dplyr)
 library(tidyr)
 library(geosphere)
 
-# Predefined ----
+# Constant ----
 # the air pollutants covered in the study 
 kPollutants <- c("CO", "NO2", "O3", "PM25", "SO2")
 
@@ -47,6 +38,7 @@ kWardNames <- data.frame(
 
 # Function ----
 # function: read attribute table of shapefile of GIS
+# parameters: 
 # name.path: the directory of the shapefile
 GetAttrTab <- function(name.path) {
   output.df <- read.shapefile(name.path) %>% 
@@ -58,7 +50,10 @@ GetAttrTab <- function(name.path) {
 }
 
 # function: get monitor for each ward
-# how: take the data of the nearest monitor. 
+# how: take the data of the nearest monitor
+# parameters: 
+# centroid.df: data.frame of centroid
+# monitor.df: data.frame of monitors 
 MatchWardMon <- function(centroid.df, monitor.df) {
   # calculate the distance of wards with the existing monitors
   dist.centroid.monitor <- centroid.df %>%  
@@ -219,7 +214,7 @@ pollutant.mdb.hour$PM25 <-
 pollutant.mdb.hour$PM25$MonitorInfo$Unit <- NULL
 
 # get population data
-# make a empty charactor vector to store the results 
+# make a empty character vector to store the results 
 ward.population <- character()
 # read the MS Excel file of population data 
 for (i in centroid$sikuchoson) {
@@ -252,89 +247,80 @@ location.info <-
   # get basic information: ward name and area
   GetAttrTab("GRawData/Kyoto_ward") %>% 
   select(sikuchoson, city_eng, area) %>% 
+  # column-Latitude, column-Longitude, column-Elevation (meters)
   # join latitude, longitude, and elevation of the wards 
   left_join(
     # process centroid *.shp file
     GetAttrTab("GProcData/Kyoto_ward_centroid") %>% 
       select(city_eng, lat, long, elevation), by = "city_eng") %>% 
-  # join population data
+  # column-Population: join population data
   left_join(ward.population, by = "sikuchoson") %>% 
   mutate(
-    # add climate region: I compared the temprature data of Atlantic and Kyoto, 
-    # and decided to use the default value “Mid-Atlantic”. The reason for that 
-    # default choice is possibly because the area has similar latitude to Kyoto.
+    # column-Climate Region: I compared the temperature data of Atlantic and Kyoto, and decided to use the default value “Mid-Atlantic”. The reason for that default choice is possibly because the area has similar latitude to Kyoto.
     climate_region = "Mid-Atlantic", 
-    # Electricity Emissions (kg CO2/kWh): use “0.509”, which is estimated by 
-    # Dr. Hirabayashi based on local data of Kyoto. 
+    # column-Electricity Emissions (kg CO2/kWh): use “0.509”, which is estimated by Dr. Hirabayashi based on local data of Kyoto. 
     electricity_emissions = 0.509, 
-    # calculate mean daily minimum temperature then turn to Fahrenheit degree
+    # column-Mean Minimum Temperature (Fahrenheit): calculate mean daily minimum temperature then turn to Fahrenheit degree
     mean_minimum_temperature_fahrenheit = mean(sta.temp$temp) * 1.8 + 32, 
-    # Leaf On Day of Year: Based on Table S1 of Kang, J., Hirabayashi, S., 
-    # Shibata, S., 2022. Urban Forest Ecosystem Services Vary with Land Use and 
-    # Species: A Case Study of Kyoto City. Forests 13, 67, the value is Apri 4th,
-    # which is 94th day of the year 2019, while the date for "Leaf Off Day of 
-    # Year" is November 18th, which is 322nd day of the year 2019.
+    # column-Leaf On Day of Year and column-Leaf Off Day of Year: based on Table S1 of Kang, J., Hirabayashi, S., Shibata, S., 2022. Urban Forest Ecosystem Services Vary with Land Use and Species: A Case Study of Kyoto City. Forests 13, 67, the value is Apri 4th, which is 94th day of the year 2019, while the date for "Leaf Off Day of Year" is November 18th, which is 322nd day of the year 2019.
     leaf_on_day_of_year = 94, 
     leaf_off_day_of_year = 322, 
-    # GMT Offset (hours): the value is “9”.
+    # column-GMT Offset (hours): the value is “9”.
     gmt_offset_hours = 9, 
-    # Warm Temperatures: select “Yes”. 
+    # column-Warm Temperatures: select “Yes”. 
     warm_temperatures = "Yes", 
-    # Abundant Rain: select “Yes”. 
+    # column-Abundant Rain: select “Yes”. 
     abundant_rain = "Yes") %>% 
   left_join(forest.cover, by = "sikuchoson") %>% 
   mutate(
+    # column-Abundant Vegetation
     forest_coverage = ifelse(is.na(.$forest_coverage), 0, forest_coverage), 
     abundant_vegetation = ifelse(forest_coverage >= 0.5, "Yes", "No"), 
-    # Snow: According to Weather Spark website for Kyoto (https://ja.weatherspa
+    # column-Snow: According to Weather Spark website for Kyoto (https://ja.weatherspa
     # rk.com/y/143438/%E4%BA%AC%E9%83%BD%E5%B8%82%E3%80%81%E6%97%A5%E6%9C%AC%E3%
     # 81%AB%E3%81%8A%E3%81%91%E3%82%8B%E5%B9%B4%E9%96%93%E3%81%AE%E5%B9%B3%E5%
     # 9D%87%E7%9A%84%E3%81%AA%E6%B0%97%E5%80%99), the value is “Yes”. 
     snow = "Yes",
-    # Ozone State: according to Alexis Ellis of i-Tree company, choose a 
-    # location that has similar latitude to Kyoto. In this case, I choose 
-    # “Georgia”.  
+    # column-Ozone State: according to Alexis Ellis of i-Tree company, choose a location that has similar latitude to Kyoto. In this case, I choose “Georgia”
     ozone_state = "Georgia", 
-    # Add pollution data for this location?: put a tick on the box. 
+    # column-Add pollution data for this location?: put a tick on the box. 
     add_pollution_data_for_this_location = "put a tick on the box",  
-    # Year: “2019”, since both the years of the plant field investigation and 
-    # the pollution data processed by Dr. Hirabayashi are 2019. 
+    # column-Year: “2019”, since both the years of the plant field investigation and the pollution data processed by Dr. Hirabayashi are 2019. 
     year = "2019", 
-    # Pollution Data: Processed with R based on database provided by Dr. 
-    # Hirabayashi. An example see the Excel of Kita-ku ward of Kyoto City. I 
-    # will upload the code and raw data afterward. One may notice that there is 
-    # no data for PM 10 in Kyoto, so I just left it blank. 
+    # column-Pollution Data: Processed with R based on database provided by Dr. Hirabayashi. An example see the Excel of Kita-ku ward of Kyoto City. I will upload the code and raw data afterward. One may notice that there is no data for PM 10 in Kyoto, so I just left it blank. 
     pollution_data = paste0(
       "populate CO data of the ward from 'AddPollution' file to template ", 
       "then upload it"
     ), 
+    # column-Pollution Monitor Source 
     pollution_monitor_source = 
       "National Institute for Environmental Studies, Japan"
   ) %>% 
     # add latitude and longitude of the matched CO monitors 
-    # Latitude: The latitude of the nearest monitor is used. I used QGIS and R to
-    # match the centroids of wards with the nearest monitor for each air pollutant. 
-    # Longitude: The latitude of the nearest monitor is used. I used QGIS and R 
-    # to match the centroids of wards with the nearest monitor for each air pollutant.
+    # column-Latitude: The latitude of the nearest monitor is used. I used QGIS and R to match the centroids of wards with the nearest monitor for each air pollutant 
+    # column-Longitude: The latitude of the nearest monitor is used. I used QGIS and R to match the centroids of wards with the nearest monitor for each air pollutant
     left_join(ward.monitor.match$CO, by = c("sikuchoson" = "ward")) %>% 
     select(-monitor, -monitor_id, -dist_ward_monitor) %>% 
-    # Resubmission: That is the first time we users submit the pollution data of each ward of Kyoto to i-Tree database, so select “No”. 
+    # column-Resubmission: That is the first time we users submit the pollution data of each ward of Kyoto to i-Tree database, so select “No”. 
     mutate(resubmission = "No") %>% 
   # tidy data to fit the upload data requirement 
   select(-sikuchoson) %>% 
   rename(latitude = lat, 
          longitude = long, 
          elevation_meters = elevation, 
-         area_in_square_meters = area, 
+         area_in_square_meters = area,  # column-Area in square meters
          city = city_eng) %>% 
+  # column-City
   mutate(city = gsub("Kyoto-shi, ", "", city)) %>% 
-  mutate(continent = "Asia", 
-         nation = "Japan", 
-         state_province = "Kyoto", 
-         state_province_type = "Prefecture", 
-         county_district = "Kyoto", 
-         county_district_type = "City", 
-         currency = "Yen") %>% 
+  mutate(
+    continent = "Asia",  # column-Continent
+    nation = "Japan",  # column-Nation
+    state_province = "Kyoto",  # column-State/Province
+    state_province_type = "Prefecture",  # column-State/Province Type
+    county_district = "Kyoto",  # column-County/District
+    county_district_type = "City",  # column-County/District Type
+    currency = "Yen"  # column-Currency
+  ) %>% 
   select(
     continent, nation, state_province, state_province_type, 
     county_district, county_district_type, city, currency, 
