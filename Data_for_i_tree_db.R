@@ -83,7 +83,7 @@ MatchWardMon <- function(centroid.df, monitor.df) {
 # parameters: 
 # mdb.name: the name of the *.mdb file
 # mdb.dir: the directory of the *.mdb file 
-GetMdb <- function(mdb.name, mdb.dir="GRawData/Kang-san2/2019/") {
+GetMdb <- function(mdb.name, mdb.dir="RRawData/ITreeOutput/") {
   # get table names of the *.mdb file
   names.mdb <- mdb.get(paste0(mdb.dir, mdb.name), tables = TRUE)
   
@@ -333,6 +333,12 @@ location.info <-
     pollution_monitor_source, monitor_lat, monitor_long, resubmission)
 
 # Export data ----
+# if file name doesn't exist, create one
+if(!file.exists("RProcData/AddToITreeDatabase")) {
+  dir.create("RProcData/AddToITreeDatabase")
+  dir.create("RProcData/AddToITreeDatabase/AddPollution")
+}
+
 # export new location basic data
 write.xlsx(location.info, "RProcData/AddToITreeDatabase/Location_info.xlsx")
 
