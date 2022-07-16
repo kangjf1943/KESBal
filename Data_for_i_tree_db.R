@@ -366,3 +366,8 @@ for (i in c("CO", "NO2", "O3", "SO2")) {
 GetPollutionExcels(ward.pollutant.monitor = ward.monitor.match[["PM25"]], 
                    pollutant.mdb.hour = pollutant.mdb.hour[["PM25"]], 
                    name.pollutant = "PM2.5")
+
+# Manual operation ----
+# First, input the new location data into i-Tree database based on "RProcData/AddToITreeDatabase/Location_info.xlsx".
+# Second, import air pollution data. Populate the data of the tables of "RProcData/AddToITreeDatabase/AddPollution" to original template. I put the processed templates for each ward in "MProcData/AddPollutToITreeDatabase". Then send them to staff of David company, they will kindly help to import the data into the database. Or, alternatively, you can also import the data by yourself. Just for the record, you can also check the file "RProcData/AddToITreeDatabase/Match_wards_and_monitors_for_each_pollutant.xlsx" to see which monitor I used for each ward respectively. 
+# For precipitation data, just copy the data of "RRawData/Kyoto_hourly_precipitation_2019.csv" and paste them in the template "RRawData/Rain_2019.xlsx". I put the processed template in "MProcData/AddRainToITreeDatabase/Rain_2019.xlsx". Then, again, you can either send it to staff of David company, or import the data by yourself. 
