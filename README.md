@@ -2,9 +2,9 @@
 
 A project aims to evaluate the balance between the demand and supply of key ecosystem services in each ward of Kyoto City. 
 
-# Codebook for Data
+## Codebook for Data
 
-## File "GRawData"
+### File "GRawData"
 
 The raw data for QGIS. 
 
@@ -14,7 +14,7 @@ It is used to extract the elevation data of each ward of Kyoto city, which is re
 In the download terms, a citation of the database is required if any article based on this research is published. 
 Just for the record, there is another interactive online GIS showing the elevation data of Japan (https://zh-cn.topographic-map.com/maps/eh0b/%E4%BA%AC%E9%83%BD%E5%B8%82/). 
 
-# File "RRawData"
+### File "RRawData"
 
 **Kyoto_hourly_precipitation_2019.csv:**
 Hourly precipitation of Kyoto in 2019, download from: https://www.data.jma.go.jp/gmd/risk/obsdl/index.php. When downloading data, choose "京都" as target place, "時別値" and "降水量（前1時間）" as target data, "2019.01.01-2019.12.31" as target duration. 
