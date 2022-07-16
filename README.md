@@ -9,7 +9,7 @@ A project aims to evaluate the balance between the demand and supply of key ecos
 The raw data for QGIS. 
 
 **japan_dem_wgs84":**
-DEM data of Japan, downloaded from [Harverd dataverse] ( https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/28762), the file "japan_dem_wgs84.zip". 
+DEM data of Japan, downloaded from [Harverd dataverse]( https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/28762), the file "japan_dem_wgs84.zip". 
 It is used to extract the elevation data of each ward of Kyoto city, which is required for adding new location into i-Tree database. 
 In the download terms, a citation of the database is required if any article based on this research is published. 
 Just for the record, there is another interactive online GIS showing the elevation data of Japan (https://zh-cn.topographic-map.com/maps/eh0b/%E4%BA%AC%E9%83%BD%E5%B8%82/). 
